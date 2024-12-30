@@ -27,7 +27,8 @@ import os
 import logging
 import unittest
 from decimal import Decimal
-from service.models import Product, Category, db
+
+from service.models import Product, Category, db, DataValidationError
 from service import app
 from tests.factories import ProductFactory
 
@@ -35,11 +36,12 @@ DATABASE_URI = os.getenv(
     "DATABASE_URI", "postgresql://postgres:postgres@localhost:5432/postgres"
 )
 
-
 ######################################################################
 #  P R O D U C T   M O D E L   T E S T   C A S E S
 ######################################################################
 # pylint: disable=too-many-public-methods
+
+
 class TestProductModel(unittest.TestCase):
     """Test Cases for Product Model"""
 
@@ -135,6 +137,17 @@ class TestProductModel(unittest.TestCase):
         self.assertEqual(len(products), 1)
         self.assertEqual(products[0].id, original_id)
         self.assertEqual(products[0].description, "testing")
+
+    def test_update_a_product_with_error(self):
+        """It should NOT Update, DataValidationError """
+        product = ProductFactory()
+        product.id = None
+        product.description = "testing"
+        # Assert that DataValidationError is raised
+        with self.assertRaises(DataValidationError) as context:
+            product.update()
+        # Verify the exception message
+        self.assertEqual(str(context.exception), "Update called with empty ID field")
 
     def test_delete_a_product(self):
         """It should Delete a Product"""
