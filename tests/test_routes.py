@@ -268,6 +268,71 @@ class TestProductRoutes(TestCase):
         for product in data:
             self.assertEqual(product["available"], True)
 
+    def test_create_product_with_missing_fields(self):
+        """It should return 400 Bad Request for missing fields"""
+        # Create a payload with missing required fields
+        incomplete_data = {
+            "description": "A test product",
+            "price": "19.99",
+            "available": True,
+            "category": "ELECTRONICS"  # needs a name filed after this
+            }
+
+        response = self.client.post(BASE_URL, json=incomplete_data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        error_message = response.get_json().get("message", "")
+        self.assertIn("missing name", error_message)
+
+    def test_create_product_with_invalid_price(self):
+        """It should return 400 Bad Request for invalid price"""
+        invalid_price_data = {
+            "name": "Test Product",
+            "description": "A test product",
+            "price": "not-a-number",  # needs to be a number
+            "available": True,
+            "category": "Electronics"
+        }
+        response = self.client.post(BASE_URL, json=invalid_price_data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        # Check the error message
+        error_message = response.get_json().get("message", "")
+        self.assertIn("Invalid price value", error_message)
+
+    def test_create_product_with_invalid_available_type(self):
+        """It should return 400 Bad Request for invalid available type"""
+        invalid_available_data = {
+            "name": "Test Product",
+            "description": "A test product",
+            "price": "19.99",
+            "available": "yes",  # needs to be boolean
+            "category": "ELECTRONICS"
+        }
+
+        response = self.client.post(BASE_URL, json=invalid_available_data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        error_message = response.get_json().get("message", "")
+        self.assertIn("Invalid type for boolean [available]", error_message)
+
+    def test_create_product_with_invalid_category(self):
+        """It should return 400 Bad Request for invalid category"""
+        # Create a payload with an invalid category
+        invalid_category_data = {
+            "name": "Test Product",
+            "description": "A test product",
+            "price": "19.99",
+            "available": True,
+            "category": "NON_EXISTENT_CATEGORY"
+        }
+
+        response = self.client.post(BASE_URL, json=invalid_category_data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        error_message = response.get_json().get("message", "")
+        self.assertIn("Invalid attribute", error_message)
+
     ######################################################################
     # Utility functions
     ######################################################################

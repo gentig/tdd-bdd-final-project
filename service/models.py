@@ -30,7 +30,7 @@ available (boolean) - True for products that are available for adoption
 """
 import logging
 from enum import Enum
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 
@@ -132,7 +132,10 @@ class Product(db.Model):
         try:
             self.name = data["name"]
             self.description = data["description"]
-            self.price = Decimal(data["price"])
+            try:
+                self.price = Decimal(data["price"])
+            except InvalidOperation as exc:
+                raise DataValidationError(f"Invalid price value: {data['price']}") from exc
             if isinstance(data["available"], bool):
                 self.available = data["available"]
             else:
